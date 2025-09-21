@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hanzi Sprint (汉字冲刺) - Advanced PSLE Vocabulary</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f0f7ff;
+            --main-color: #005a9c;
+            --accent-color: #ffc107;
+            --correct-color: #28a745;
+            --incorrect-color: #dc3545;
+            --white: #ffffff;
+            --text-dark: #333;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Poppins', 'Noto Sans SC', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+            background-color: var(--white);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        h1 {
+            color: var(--main-color);
+            font-family: 'Noto Sans SC', sans-serif;
+            font-size: 2.5rem;
+        }
+        
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        p {
+            margin: 15px 0;
+            line-height: 1.6;
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: var(--main-color);
+            color: var(--white);
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            width: 200px;
+            margin-top: 20px;
+        }
+
+        .btn:hover {
+            background-color: #004170;
+            transform: translateY(-2px);
+        }
+
+        /* Difficulty Slider */
+        .difficulty-slider {
+            margin: 30px auto;
+            width: 80%;
+        }
+        
+        .difficulty-slider label {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 15px;
+            border-radius: 5px;   
+            background: #d3eaff;
+            outline: none;
+            opacity: 0.7;
+            -webkit-transition: .2s;
+            transition: opacity .2s;
+            margin-top: 10px;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%; 
+            background: var(--main-color);
+            cursor: pointer;
+        }
+
+        /* Game Screen */
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .game-header .stat {
+            background-color: var(--bg-color);
+            padding: 5px 15px;
+            border-radius: 20px;
+        }
+
+        #lives {
+            font-size: 1.5rem;
+        }
+        
+        #timer-bar-container {
+            width: 100%;
+            height: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        #timer-bar {
+            height: 100%;
+            width: 100%;
+            background-color: var(--correct-color);
+            border-radius: 5px;
+            transition: width 0.1s linear, background-color 0.5s ease;
+        }
+
+        #prompt {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 30px 0;
+            min-height: 70px;
+        }
+
+        .answer-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .answer-btn {
+            background-color: var(--white);
+            color: var(--main-color);
+            border: 2px solid var(--main-color);
+            padding: 20px;
+            font-size: 2rem;
+            font-family: 'Noto Sans SC', sans-serif;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .answer-btn:hover:not(:disabled) {
+            background-color: var(--bg-color);
+            transform: translateY(-3px);
+        }
+
+        .answer-btn.correct {
+            background-color: var(--correct-color);
+            border-color: var(--correct-color);
+            color: var(--white);
+        }
+
+        .answer-btn.incorrect {
+            background-color: var(--incorrect-color);
+            border-color: var(--incorrect-color);
+            color: var(--white);
+        }
+        
+        .answer-btn:disabled {
+            cursor: not-allowed;
+        }
+
+        /* Game Over Screen */
+        #summary-table-container {
+            max-height: 250px;
+            overflow-y: auto;
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        #summary-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        #summary-table th, #summary-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        #summary-table th {
+            background-color: var(--bg-color);
+            position: sticky;
+            top: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="start-screen" class="screen active">
+            <h1>Hanzi Sprint 汉字冲刺</h1>
+            <p>Test your PSLE Mandarin vocabulary! Read the English meaning and choose the correct Chinese word before time runs out. You have 3 lives. Good luck! 加油!</p>
+            <div class="difficulty-slider">
+                <label for="difficulty">Difficulty: <span id="difficulty-label">Medium (5s)</span></label>
+                <input type="range" id="difficulty" min="1" max="3" value="2">
+            </div>
+            <button id="start-btn" class="btn">Start Sprint</button>
+        </div>
+
+        <div id="game-screen" class="screen">
+            <div class="game-header">
+                <div id="score" class="stat">Score: 0</div>
+                <div id="streak" class="stat">🔥 x 0</div>
+                <div id="lives" class="stat">❤️❤️❤️</div>
+            </div>
+            <div id="timer-bar-container">
+                <div id="timer-bar"></div>
+            </div>
+            <div id="prompt">What is the Mandarin word for...?</div>
+            <div class="answer-grid">
+                <button class="answer-btn" data-index="0"></button>
+                <button class="answer-btn" data-index="1"></button>
+                <button class="answer-btn" data-index="2"></button>
+                <button class="answer-btn" data-index="3"></button>
+            </div>
+        </div>
+
+        <div id="game-over-screen" class="screen">
+            <h2>Great Sprint! Time to review.</h2>
+            <p><strong>Final Score: <span id="final-score">0</span></strong></p>
+            <h3>Words to Revise (复习词语)</h3>
+            <div id="summary-table-container">
+                <table id="summary-table">
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>汉字</th>
+                            <th>Pinyin</th>
+                            <th>English Meaning</th>
+                        </tr>
+                    </thead>
+                    <tbody id="summary-body">
+                        </tbody>
+                </table>
+            </div>
+            <button id="try-again-btn" class="btn">Try Again</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. NEW 200-WORD LIST ---
+        const wordList = [
+            { hanzi: '安排', pinyin: 'ān pái', english: 'To arrange' },
+            { hanzi: '保证', pinyin: 'bǎo zhèng', english: 'To guarantee' },
+            { hanzi: '报名', pinyin: 'bào míng', english: 'To sign up' },
+            { hanzi: '并且', pinyin: 'bìng qiě', english: 'And also / moreover' },
+            { hanzi: '表扬', pinyin: 'biǎo yáng', english: 'To praise' },
+            { hanzi: '标准', pinyin: 'biāo zhǔn', english: 'Standard' },
+            { hanzi: '比较', pinyin: 'bǐ jiào', english: 'Relatively / to compare' },
+            { hanzi: ' bør', pinyin: 'bìng dú', english: 'Virus' },
+            { hanzi: '不必', pinyin: 'bú bì', english: 'Need not' },
+            { hanzi: '不断', pinyin: 'bú duàn', english: 'Continuously' },
+            { hanzi: '不管', pinyin: 'bù guǎn', english: 'No matter' },
+            { hanzi: '不仅', pinyin: 'bù jǐn', english: 'Not only' },
+            { hanzi: '部分', pinyin: 'bù fen', english: 'Part / section' },
+            { hanzi: '布告', pinyin: 'bù gào', english: 'Notice / bulletin' },
+            { hanzi: '材料', pinyin: 'cái liào', english: 'Material' },
+            { hanzi: '采取', pinyin: 'cǎi qǔ', english: 'To adopt / take measures' },
+            { hanzi: '参考', pinyin: 'cān kǎo', english: 'To refer to / reference' },
+            { hanzi: '产生', pinyin: 'chǎn shēng', english: 'To produce / generate' },
+            { hanzi: '长辈', pinyin: 'zhǎng bèi', english: 'Elder generation' },
+            { hanzi: '诚实', pinyin: 'chéng shí', english: 'Honest' },
+            { hanzi: '乘客', pinyin: 'chéng kè', english: 'Passenger' },
+            { hanzi: '丑', pinyin: 'chǒu', english: 'Ugly' },
+            { hanzi: '臭', pinyin: 'chòu', english: 'Smelly' },
+            { hanzi: '除非', pinyin: 'chú fēi', english: 'Unless' },
+            { hanzi: '处理', pinyin: 'chǔ lǐ', english: 'To handle / deal with' },
+            { hanzi: '传统', pinyin: 'chuán tǒng', english: 'Tradition / traditional' },
+            { hanzi: '创造', pinyin: 'chuàng zào', english: 'To create' },
+            { hanzi: '词语', pinyin: 'cí yǔ', english: 'Word / phrase' },
+            { hanzi: '从来', pinyin: 'cóng lái', english: 'Always / from the beginning' },
+            { hanzi: '匆忙', pinyin: 'cōng máng', english: 'Hasty / in a hurry' },
+            { hanzi: '从此', pinyin: 'cóng cǐ', english: 'From now on' },
+            { hanzi: '从而', pinyin: 'cóng ér', english: 'Thus / thereby' },
+            { hanzi: '答应', pinyin: 'dā ying', english: 'To promise / agree' },
+            { hanzi: '达到', pinyin: 'dá dào', english: 'To achieve / reach' },
+            { hanzi: '大概', pinyin: 'dà gài', english: 'Probably / approximately' },
+            { hanzi: '代替', pinyin: 'dài tì', english: 'To replace / substitute' },
+            { hanzi: '代表', pinyin: 'dài biǎo', english: 'To represent / representative' },
+            { hanzi: '当时', pinyin: 'dāng shí', english: 'At that time' },
+            { hanzi: '倒', pinyin: 'dǎo', english: 'To fall / collapse' },
+            { hanzi: '道歉', pinyin: 'dào qiàn', english: 'To apologize' },
+            { hanzi: '的确', pinyin: 'dí què', english: 'Indeed / really' },
+            { hanzi: '地址', pinyin: 'dì zhǐ', english: 'Address' },
+            { hanzi: '递', pinyin: 'dì', english: 'To pass (something to)' },
+            { hanzi: '调查', pinyin: 'diào chá', english: 'To investigate / survey' },
+            { hanzi: '顶', pinyin: 'dǐng', english: 'Top / peak' },
+        { hanzi: '逗', pinyin: 'dòu', english: 'To tease / amuse' },
+        { hanzi: '独特', pinyin: 'dú tè', english: 'Unique / distinctive' },
+        { hanzi: '度过', pinyin: 'dù guò', english: 'To spend / pass time' },
+        { hanzi: '断', pinyin: 'duàn', english: 'To break / snap' },
+        { hanzi: '对象', pinyin: 'duì xiàng', english: 'Target / object' },
+        { hanzi: '发表', pinyin: 'fā biǎo', english: 'To publish / issue' },
+        { hanzi: '发达', pinyin: 'fā dá', english: 'Developed / advanced' },
+        { hanzi: '发挥', pinyin: 'fā huī', english: 'To bring into play' },
+        { hanzi: '发明', pinyin: 'fā míng', english: 'To invent / invention' },
+        { hanzi: '范围', pinyin: 'fàn wéi', english: 'Scope / range' },
+        { hanzi: '方式', pinyin: 'fāng shì', english: 'Method / way' },
+        { hanzi: '仿佛', pinyin: 'fǎng fú', english: 'As if / seemingly' },
+        { hanzi: '防止', pinyin: 'fáng zhǐ', english: 'To prevent' },
+        { hanzi: '访问', pinyin: 'fǎng wèn', english: 'To visit / interview' },
+        { hanzi: '非', pinyin: 'fēi', english: 'Not / non-' },
+        { hanzi: '否则', pinyin: 'fǒu zé', english: 'Otherwise' },
+        { hanzi: '符合', pinyin: 'fú hé', english: 'To conform to / accord with' },
+        { hanzi: '负责', pinyin: 'fù zé', english: 'To be responsible for' },
+        { hanzi: '改进', pinyin: 'gǎi jìn', english: 'To improve' },
+        { hanzi: '感受', pinyin: 'gǎn shòu', english: 'To feel / experience' },
+        { hanzi: '感想', pinyin: 'gǎn xiǎng', english: 'Thoughts / impressions' },
+        { hanzi: '根本', pinyin: 'gēn běn', english: 'Fundamental / at all' },
+        { hanzi: '工具', pinyin: 'gōng jù', english: 'Tool' },
+        { hanzi: '贡献', pinyin: 'gòng xiàn', english: 'To contribute / contribution' },
+        { hanzi: '沟通', pinyin: 'gōu tōng', english: 'To communicate' },
+        { hanzi: '构成', pinyin: 'gòu chéng', english: 'To constitute / form' },
+        { hanzi: '估计', pinyin: 'gū jì', english: 'To estimate' },
+        { hanzi: '鼓励', pinyin: 'gǔ lì', english: 'To encourage' },
+        { hanzi: '鼓掌', pinyin: 'gǔ zhǎng', english: 'To applaud' },
+        { hanzi: '观察', pinyin: 'guān chá', english: 'To observe' },
+        { hanzi: '观点', pinyin: 'guān diǎn', english: 'Point of view' },
+        { hanzi: '广场', pinyin: 'guǎng chǎng', english: 'Public square / plaza' },
+        { hanzi: '规定', pinyin: 'guī dìng', english: 'Rule / regulation' },
+        { hanzi: '规律', pinyin: 'guī lǜ', english: 'Law / regular pattern' },
+        { hanzi: '果然', pinyin: 'guǒ rán', english: 'As expected / sure enough' },
+        { hanzi: '过程', pinyin: 'guò chéng', english: 'Process' },
+        { hanzi: '害羞', pinyin: 'hài xiū', english: 'Shy' },
+        { hanzi: '何必', pinyin: 'hé bì', english: 'Why is there a need' },
+        { hanzi: '何况', pinyin: 'hé kuàng', english: 'Let alone / moreover' },
+        { hanzi: '和平', pinyin: 'hé píng', english: 'Peace' },
+        { hanzi: '核心', pinyin: 'hé xīn', english: 'Core / nucleus' },
+        { hanzi: '后果', pinyin: 'hòu guǒ', english: 'Consequence' },
+        { hanzi: '呼吸', pinyin: 'hū xī', english: 'To breathe' },
+        { hanzi: '忽然', pinyin: 'hū rán', english: 'Suddenly' },
+        { hanzi: '糊涂', pinyin: 'hú tu', english: 'Confused / muddled' },
+        { hanzi: '华侨', pinyin: 'huá qiáo', english: 'Overseas Chinese' },
+        { hanzi: '化学', pinyin: 'huà xué', english: 'Chemistry' },
+        { hanzi: '怀念', pinyin: 'huái niàn', english: 'To cherish the memory of' },
+        { hanzi: '缓解', pinyin: 'huǎn jiě', english: 'To alleviate / ease' },
+        { hanzi: '幻想', pinyin: 'huàn xiǎng', english: 'Fantasy / illusion' },
+        { hanzi: '慌张', pinyin: 'huāng zhāng', english: 'Flustered / panicky' },
+        { hanzi: '灰心', pinyin: 'huī xīn', english: 'To be discouraged' },
+        { hanzi: '挥', pinyin: 'huī', english: 'To wave / wield' },
+        { hanzi: '恢复', pinyin: 'huī fù', english: 'To recover / restore' },
+        { hanzi: '活动', pinyin: 'huó dòng', english: 'Activity' },
+        { hanzi: '基本', pinyin: 'jī běn', english: 'Basic / fundamental' },
+        { hanzi: '激烈', pinyin: 'jī liè', english: 'Intense / fierce' },
+        { hanzi: '及格', pinyin: 'jí gé', english: 'To pass an exam' },
+        { hanzi: '集体', pinyin: 'jí tǐ', english: 'Collective' },
+        { hanzi: '集中', pinyin: 'jí zhōng', english: 'To concentrate / centralize' },
+        { hanzi: '记录', pinyin: 'jì lù', english: 'To record / a record' },
+        { hanzi: '纪律', pinyin: 'jì lǜ', english: 'Discipline' },
+        { hanzi: '纪念', pinyin: 'jì niàn', english: 'To commemorate' },
+        { hanzi: '家庭', pinyin: 'jiā tíng', english: 'Family / household' },
+        { hanzi: '价值', pinyin: 'jià zhí', english: 'Value' },
+        { hanzi: '驾驶', pinyin: 'jià shǐ', english: 'To drive (a vehicle)' },
+        { hanzi: '建议', pinyin: 'jiàn yì', english: 'To suggest / suggestion' },
+        { hanzi: '将来', pinyin: 'jiāng lái', english: 'Future' },
+        { hanzi: '奖金', pinyin: 'jiǎng jīn', english: 'Bonus / prize money' },
+        { hanzi: '降低', pinyin: 'jiàng dī', english: 'To reduce / lower' },
+        { hanzi: '交', pinyin: 'jiāo', english: 'To hand over / to make friends' },
+        { hanzi: '骄傲', pinyin: 'jiāo ào', english: 'Proud / arrogant' },
+        { hanzi: '接触', pinyin: 'jiē chù', english: 'To contact / get in touch' },
+        { hanzi: '接待', pinyin: 'jiē dài', english: 'To receive (guests)' },
+        { hanzi: '接近', pinyin: 'jiē jìn', english: 'To approach / close to' },
+        { hanzi: '节省', pinyin: 'jié shěng', english: 'To save / economize' },
+        { hanzi: '结构', pinyin: 'jié gòu', english: 'Structure' },
+        { hanzi: '结合', pinyin: 'jié hé', english: 'To combine / unite' },
+        { hanzi: '结论', pinyin: 'jié lùn', english: 'Conclusion' },
+        { hanzi: '借口', pinyin: 'jiè kǒu', english: 'Excuse' },
+        { hanzi: '届', pinyin: 'jiè', english: 'Session / graduating class' },
+        { hanzi: '紧急', pinyin: 'jǐn jí', english: 'Urgent' },
+        { hanzi: '谨慎', pinyin: 'jǐn shèn', english: 'Cautious / prudent' },
+        { hanzi: '进步', pinyin: 'jìn bù', english: 'To progress / progress' },
+        { hanzi: '精力', pinyin: 'jīng lì', english: 'Energy / vigor' },
+        { hanzi: '精神', pinyin: 'jīng shén', english: 'Spirit / mind' },
+        { hanzi: '举办', pinyin: 'jǔ bàn', english: 'To hold / conduct (an event)' },
+        { hanzi: '具体', pinyin: 'jù tǐ', english: 'Specific / concrete' },
+        { hanzi: '具有', pinyin: 'jù yǒu', english: 'To possess / have' },
+        { hanzi: '据说', pinyin: 'jù shuō', english: 'It is said / allegedly' },
+        { hanzi: '捐', pinyin: 'juān', english: 'To donate' },
+        { hanzi: '绝对', pinyin: 'jué duì', english: 'Absolute / absolutely' },
+        { hanzi: '角色', pinyin: 'jué sè', english: 'Role / character' },
+        { hanzi: '开发', pinyin: 'kāi fā', english: 'To develop / exploit' },
+        { hanzi: '开放', pinyin: 'kāi fàng', english: 'To open up / be open' },
+        { hanzi: '可见', pinyin: 'kě jiàn', english: 'It is clear that' },
+        { hanzi: '可靠', pinyin: 'kě kào', english: 'Reliable' },
+        { hanzi: '课程', pinyin: 'kè chéng', english: 'Course / curriculum' },
+        { hanzi: '克服', pinyin: 'kè fú', english: 'To overcome' },
+        { hanzi: '客观', pinyin: 'kè guān', english: 'Objective' },
+        { hanzi: '空间', pinyin: 'kōng jiān', english: 'Space' },
+        { hanzi: '控制', pinyin: 'kòng zhì', english: 'To control' },
+        { hanzi: '夸', pinyin: 'kuā', english: 'To praise / boast' },
+        { hanzi: '扩大', pinyin: 'kuò dà', english: 'To expand / enlarge' },
+        { hanzi: '来自', pinyin: 'lái zì', english: 'To come from' },
+        { hanzi: '烂', pinyin: 'làn', english: 'Rotten / terrible' },
+        { hanzi: '劳动', pinyin: 'láo dòng', english: 'Labor / work' },
+        { hanzi: '理论', pinyin: 'lǐ lùn', english: 'Theory' },
+        { hanzi: '理由', pinyin: 'lǐ yóu', english: 'Reason / ground' },
+        { hanzi: '力量', pinyin: 'lì liàng', english: 'Strength / power' },
+        { hanzi: '立刻', pinyin: 'lì kè', english: 'Immediately' },
+        { hanzi: '利润', pinyin: 'lì rùn', english: 'Profit' },
+        { hanzi: '利用', pinyin: 'lì yòng', english: 'To make use of / utilize' },
+        { hanzi: '联合', pinyin: 'lián hé', english: 'To unite / joint' },
+        { hanzi: '陆续', pinyin: 'lù xù', english: 'One after another / in succession' },
+        { hanzi: '录取', pinyin: 'lù qǔ', english: 'To admit / enroll' },
+        { hanzi: '满足', pinyin: 'mǎn zú', english: 'To satisfy / be satisfied' },
+        { hanzi: '毛病', pinyin: 'máo bìng', english: 'Fault / defect' },
+        { hanzi: '面对', pinyin: 'miàn duì', english: 'To face / confront' },
+        { hanzi: '面积', pinyin: 'miàn jī', english: 'Area (surface)' },
+        { hanzi: '明显', pinyin: 'míng xiǎn', english: 'Obvious' },
+        { hanzi: '命令', pinyin: 'mìng lìng', english: 'To command / an order' },
+        { hanzi: '命运', pinyin: 'mìng yùn', english: 'Fate / destiny' },
+        { hanzi: '模仿', pinyin: 'mó fǎng', english: 'To imitate' },
+        { hanzi: '陌生', pinyin: 'mò shēng', english: 'Strange / unfamiliar' },
+        { hanzi: '目前', pinyin: 'mù qián', english: 'At present / currently' },
+        { hanzi: '内心', pinyin: 'nèi xīn', english: 'Heart / innermost being' },
+        { hanzi: '佩服', pinyin: 'pèi fú', english: 'To admire' },
+        { hanzi: '配合', pinyin: 'pèi hé', english: 'To cooperate' },
+        { hanzi: '培养', pinyin: 'péi yǎng', english: 'To cultivate / nurture' },
+        { hanzi: '批评', pinyin: 'pī píng', english: 'To criticize / criticism' },
+        { hanzi: '疲劳', pinyin: 'pí láo', english: 'Fatigue / tired' },
+        { hanzi: '凭', pinyin: 'píng', english: 'To rely on / based on' },
+        { hanzi: '评价', pinyin: 'píng jià', english: 'To evaluate / evaluation' },
+        { hanzi: '迫切', pinyin: 'pò qiè', english: 'Urgent / pressing' },
+        { hanzi: '破坏', pinyin: 'pò huài', english: 'To destroy / damage' },
+        { hanzi: '期待', pinyin: 'qī dài', english: 'To look forward to' },
+        { hanzi: '期间', pinyin: 'qī jiān', english: 'Period / duration' },
+        { hanzi: '其余', pinyin: 'qí yú', english: 'The rest / remaining' },
+        { hanzi: '奇迹', pinyin: 'qí jì', english: 'Miracle' },
+        { hanzi: '企业', pinyin: 'qǐ yè', english: 'Enterprise / company' },
+        { hanzi: '启发', pinyin: 'qǐ fā', english: 'To inspire / enlighten' },
+        { hanzi: '气氛', pinyin: 'qì fēn', english: 'Atmosphere' },
+        { hanzi: '谦虚', pinyin: 'qiān xū', english: 'Modest' },
+        { hanzi: '瞧', pinyin: 'qiáo', english: 'To look at / see' },
+        { hanzi: '巧妙', pinyin: 'qiǎo miào', english: 'Clever / ingenious' },
+        { hanzi: '亲自', pinyin: 'qīn zì', english: 'Personally / in person' },
+        { hanzi: '勤奋', pinyin: 'qín fèn', english: 'Diligent / hardworking' },
+        { hanzi: '青少年', pinyin: 'qīng shào nián', english: 'Teenager' },
+        { hanzi: '情绪', pinyin: 'qíng xù', english: 'Mood / emotion' },
+        { hanzi: '请求', pinyin: 'qǐng qiú', english: 'To request / ask' },
+        { hanzi: '庆祝', pinyin: 'qìng zhù', english: 'To celebrate' },
+        { hanzi: '权利', pinyin: 'quán lì', english: 'Right / privilege' },
+        { hanzi: '劝', pinyin: 'quàn', english: 'To persuade' },
+        { hanzi: '缺乏', pinyin: 'quē fá', english: 'To lack / be short of' },
+        { hanzi: '确定', pinyin: 'què dìng', english: 'To determine / confirm' },
+        { hanzi: '热烈', pinyin: 'rè liè', english: 'Enthusiastic / warm' },
+        { hanzi: '忍耐', pinyin: 'rěn nài', english: 'To endure / patience' },
+        { hanzi: '任务', pinyin: 'rèn wu', english: 'Task / mission' },
+        { hanzi: '弱', pinyin: 'ruò', english: 'Weak' },
+        { hanzi: '善良', pinyin: 'shàn liáng', english: 'Kind-hearted' },
+        { hanzi: '设备', pinyin: 'shè bèi', english: 'Equipment / facilities' },
+        { hanzi: '设计', pinyin: 'shè jì', english: 'To design / design' },
+        { hanzi: '设施', pinyin: 'shè shī', english: 'Facilities' },
+        { hanzi: '射击', pinyin: 'shè jī', english: 'To shoot / shooting' },
+        { hanzi: '身材', pinyin: 'shēn cái', english: 'Stature / figure' },
+        { hanzi: '身份', pinyin: 'shēn fèn', english: 'Identity / status' },
+        { hanzi: '深刻', pinyin: 'shēn kè', english: 'Profound / deep' },
+        { hanzi: '甚至', pinyin: 'shèn zhì', english: 'Even / so much so that' },
+        { hanzi: '生产', pinyin: 'shēng chǎn', english: 'To produce / manufacture' },
+        { hanzi: '生动', pinyin: 'shēng dòng', english: 'Vivid / lively' },
+        { hanzi: '生命', pinyin: 'shēng mìng', english: 'Life' },
+        { hanzi: '胜利', pinyin: 'shèng lì', english: 'Victory' },
+        { hanzi: '失去', pinyin: 'shī qù', english: 'To lose' },
+        { hanzi: '失业', pinyin: 'shī yè', english: 'To be unemployed' },
+        { hanzi: '诗', pinyin: 'shī', english: 'Poem / poetry' },
+        { hanzi: '实现', pinyin: 'shí xiàn', english: 'To realize / achieve' },
+        { hanzi: '实验', pinyin: 'shí yàn', english: 'Experiment' },
+        { hanzi: '实用', pinyin: 'shí yòng', english: 'Practical' },
+        { hanzi: '食物', pinyin: 'shí wù', english: 'Food' },
+        { hanzi: '使', pinyin: 'shǐ', english: 'To make / cause' },
+        { hanzi: '始终', pinyin: 'shǐ zhōng', english: 'From beginning to end' },
+        { hanzi: '士兵', pinyin: 'shì bīng', english: 'Soldier' },
+        { hanzi: '市场', pinyin: 'shì chǎng', english: 'Market' },
+        { hanzi: '似的', pinyin: 'shì de', english: 'Seems like / as if' },
+        { hanzi: '事实', pinyin: 'shì shí', english: 'Fact' },
+        { hanzi: '事物', pinyin: 'shì wù', english: 'Thing / object' },
+        { hanzi: '事先', pinyin: 'shì xiān', english: 'In advance' },
+        { hanzi: '收获', pinyin: 'shōu huò', english: 'Harvest / gains' },
+        { hanzi: '手续', pinyin: 'shǒu xù', english: 'Procedure' },
+        { hanzi: '受伤', pinyin: 'shòu shāng', english: 'To be injured' },
+        { hanzi: '寿命', pinyin: 'shòu mìng', english: 'Lifespan' },
+        { hanzi: '梳子', pinyin: 'shū zi', english: 'Comb' },
+        { hanzi: '舒适', pinyin: 'shū shì', english: 'Comfortable' },
+        { hanzi: '输入', pinyin: 'shū rù', english: 'To input' },
+        { hanzi: '蔬菜', pinyin: 'shū cài', english: 'Vegetable' },
+        { hanzi: '熟练', pinyin: 'shú liàn', english: 'Skilled / proficient' },
+        { hanzi: '属于', pinyin: 'shǔ yú', english: 'To belong to' },
+        { hanzi: '数据', pinyin: 'shù jù', english: 'Data' },
+        { hanzi: '数量', pinyin: 'shù liàng', english: 'Quantity' },
+        { hanzi: '说明', pinyin: 'shuō míng', english: 'To explain / explanation' },
+        { hanzi: '硕士', pinyin: 'shuò shì', english: 'Master\'s degree' },
+        { hanzi: '撕', pinyin: 'sī', english: 'To tear' },
+        { hanzi: '似乎', pinyin: 'sì hū', english: 'It seems / as if' },
+        { hanzi: '随时', pinyin: 'suí shí', english: 'At any time' },
+        { hanzi: '所谓', pinyin: 'suǒ wèi', english: 'So-called' },
+        { hanzi: '缩短', pinyin: 'suō duǎn', english: 'To shorten' },
+        { hanzi: '坦率', pinyin: 'tǎn shuài', english: 'Frank / blunt' },
+        { hanzi: '烫', pinyin: 'tàng', english: 'Scalding hot / to burn' },
+        { hanzi: '逃', pinyin: 'táo', english: 'To escape' },
+        { hanzi: '逃避', pinyin: 'táo bì', english: 'To escape / evade' },
+        { hanzi: '特点', pinyin: 'tè diǎn', english: 'Characteristic' },
+        { hanzi: '特殊', pinyin: 'tè shū', english: 'Special / particular' },
+        { hanzi: '疼爱', pinyin: 'téng ài', english: 'To dote on' },
+        { hanzi: '提供', pinyin: 'tí gōng', english: 'To provide / supply' },
+        { hanzi: '提前', pinyin: 'tí qián', english: 'In advance / ahead of time' },
+        { hanzi: '提醒', pinyin: 'tí xǐng', english: 'To remind' },
+        { hanzi: '体会', pinyin: 'tǐ huì', english: 'To know from experience' },
+        { hanzi: '体现', pinyin: 'tǐ xiàn', english: 'To embody / reflect' },
+        { hanzi: '天空', pinyin: 'tiān kōng', english: 'Sky' },
+        { hanzi: '天真', pinyin: 'tiān zhēn', english: 'Naive / innocent' },
+        { hanzi: '条件', pinyin: 'tiáo jiàn', english: 'Condition / requirement' },
+        { hanzi: '调整', pinyin: 'tiáo zhěng', english: 'To adjust / adjustment' },
+        { hanzi: '挑战', pinyin: 'tiǎo zhàn', english: 'To challenge / challenge' },
+        { hanzi: '通常', pinyin: 'tōng cháng', english: 'Usually / normally' },
+        { hanzi: '统一', pinyin: 'tǒng yī', english: 'To unify / unified' },
+        { hanzi: '痛苦', pinyin: 'tòng kǔ', english: 'Painful / suffering' },
+        { hanzi: '痛快', pinyin: 'tòng kuài', english: 'Delighted / forthright' },
+        { hanzi: '投资', pinyin: 'tóu zī', english: 'To invest / investment' },
+        { hanzi: '透明', pinyin: 'tòu míng', english: 'Transparent' },
+        { hanzi: '突出', pinyin: 'tū chū', english: 'Prominent / outstanding' },
+        { hanzi: '土地', pinyin: 'tǔ dì', english: 'Land' },
+        { hanzi: '推荐', pinyin: 'tuī jiàn', english: 'To recommend' },
+        { hanzi: '退步', pinyin: 'tuì bù', english: 'To regress / fall behind' },
+        { hanzi: '歪', pinyin: 'wāi', english: 'Crooked / askew' },
+        { hanzi: '完全', pinyin: 'wán quán', english: 'Completely' },
+        { hanzi: '往返', pinyin: 'wǎng fǎn', english: 'To make a round trip' },
+        { hanzi: '危害', pinyin: 'wēi hài', english: 'To harm / endanger' },
+        { hanzi: '威胁', pinyin: 'wēi xié', english: 'To threaten / threat' },
+        { hanzi: '违反', pinyin: 'wéi fǎn', english: 'To violate' },
+        { hanzi: '维护', pinyin: 'wéi hù', english: 'To maintain / safeguard' },
+        { hanzi: '唯一', pinyin: 'wéi yī', english: 'Only / sole' },
+        { hanzi: '未来', pinyin: 'wèi lái', english: 'Future' },
+        { hanzi: '位置', pinyin: 'wèi zhi', english: 'Position / location' },
+        { hanzi: '闻', pinyin: 'wén', english: 'To smell' },
+        { hanzi: '稳定', pinyin: 'wěn dìng', english: 'Stable' },
+        { hanzi: '无奈', pinyin: 'wú nài', english: 'Helpless / have no choice' },
+        { hanzi: '无数', pinyin: 'wú shù', english: 'Countless / innumerable' },
+        { hanzi: '物质', pinyin: 'wù zhì', english: 'Matter / substance' },
+        { hanzi: '吸收', pinyin: 'xī shōu', english: 'To absorb' },
+        { hanzi: '系统', pinyin: 'xì tǒng', english: 'System' },
+        { hanzi: '细节', pinyin: 'xì jié', english: 'Details' },
+        { hanzi: '瞎', pinyin: 'xiā', english: 'Blind / aimlessly' },
+        { hanzi: '吓', pinyin: 'xià', english: 'To frighten' },
+        { hanzi: '显得', pinyin: 'xiǎn de', english: 'To appear / seem' },
+        { hanzi: '现象', pinyin: 'xiàn xiàng', english: 'Phenomenon' },
+        { hanzi: '限制', pinyin: 'xiàn zhì', english: 'To restrict / limit' },
+        { hanzi: '相关', pinyin: 'xiāng guān', english: 'Related / relevant' },
+        { hanzi: '相反', pinyin: 'xiāng fǎn', english: 'Opposite / contrary' },
+        { hanzi: '相当', pinyin: 'xiāng dāng', english: 'Considerably / quite' },
+        { hanzi: '享受', pinyin: 'xiǎng shòu', english: 'To enjoy' },
+        { hanzi: '象征', pinyin: 'xiàng zhēng', english: 'To symbolize / symbol' },
+        { hanzi: '消费', pinyin: 'xiāo fèi', english: 'To consume / consumption' },
+        { hanzi: '消失', pinyin: 'xiāo shī', english: 'To disappear' },
+        { hanzi: '效率', pinyin: 'xiào lǜ', english: 'Efficiency' },
+        { hanzi: '歇', pinyin: 'xiē', english: 'To rest' },
+        { hanzi: '斜', pinyin: 'xié', english: 'Slanted / oblique' },
+        { hanzi: '心理', pinyin: 'xīn lǐ', english: 'Psychology / mentality' },
+        { hanzi: '欣赏', pinyin: 'xīn shǎng', english: 'To appreciate / enjoy' },
+        { hanzi: '信号', pinyin: 'xìn hào', english: 'Signal' },
+        { hanzi: '信任', pinyin: 'xìn rèn', english: 'To trust / trust' },
+        { hanzi: '行动', pinyin: 'xíng dòng', english: 'Action / to move' },
+        { hanzi: '形成', pinyin: 'xíng chéng', english: 'To form' },
+        { hanzi: '形容', pinyin: 'xíng róng', english: 'To describe' },
+        { hanzi: '形势', pinyin: 'xíng shì', english: 'Situation' },
+        { hanzi: '性质', pinyin: 'xìng zhì', english: 'Nature / character' },
+        { hanzi: '幸亏', pinyin: 'xìng kuī', english: 'Fortunately' },
+        { hanzi: '胸', pinyin: 'xiōng', english: 'Chest' },
+        { hanzi: '修改', pinyin: 'xiū gǎi', english: 'To amend / modify' },
+        { hanzi: '休闲', pinyin: 'xiū xián', english: 'Leisure' },
+        { hanzi: '虚心', pinyin: 'xū xīn', english: 'Modest / open-minded' },
+        { hanzi: '宣传', pinyin: 'xuān chuán', english: 'To publicize / propaganda' },
+        { hanzi: '宣布', pinyin: 'xuān bù', english: 'To announce' },
+        { hanzi: '选举', pinyin: 'xuǎn jǔ', english: 'Election / to elect' },
+        { hanzi: '学术', pinyin: 'xué shù', english: 'Academic' },
+        { hanzi: '询问', pinyin: 'xún wèn', english: 'To inquire' },
+        { hanzi: '训练', pinyin: 'xùn liàn', english: 'To train / training' },
+        { hanzi: '延长', pinyin: 'yán cháng', english: 'To extend / prolong' },
+        { hanzi: '严肃', pinyin: 'yán sù', english: 'Serious / solemn' },
+        { hanzi: '演讲', pinyin: 'yǎn jiǎng', english: 'Speech / lecture' },
+        { hanzi: '阳台', pinyin: 'yáng tái', english: 'Balcony' },
+        { hanzi: '摇', pinyin: 'yáo', english: 'To shake / wave' },
+        { hanzi: '咬', pinyin: 'yǎo', english: 'To bite' },
+        { hanzi: '业务', pinyin: 'yè wù', english: 'Business / professional work' },
+        { hanzi: '业余', pinyin: 'yè yú', english: 'Amateur / spare time' },
+        { hanzi: '一旦', pinyin: 'yī dàn', english: 'Once / in case' },
+        { hanzi: '依然', pinyin: 'yī rán', english: 'Still / as before' },
+        { hanzi: '移动', pinyin: 'yí dòng', english: 'To move' },
+        { hanzi: '遗憾', pinyin: 'yí hàn', english: 'Regret / pity' },
+        { hanzi: '疑问', pinyin: 'yí wèn', english: 'Doubt / question' },
+        { hanzi: '以及', pinyin: 'yǐ jí', english: 'As well as' },
+        { hanzi: '以来', pinyin: 'yǐ lái', english: 'Since' },
+        { hanzi: '议论', pinyin: 'yì lùn', english: 'To discuss / comment' },
+        { hanzi: '义务', pinyin: 'yì wù', english: 'Duty / obligation' },
+        { hanzi: '因素', pinyin: 'yīn sù', english: 'Factor' },
+        { hanzi: '银', pinyin: 'yín', english: 'Silver' },
+        { hanzi: '英雄', pinyin: 'yīng xióng', english: 'Hero' },
+        { hanzi: '迎接', pinyin: 'yíng jiē', english: 'To welcome' },
+        { hanzi: '营养', pinyin: 'yíng yǎng', english: 'Nutrition' },
+        { hanzi: '营业', pinyin: 'yíng yè', english: 'To do business' },
+        { hanzi: '影子', pinyin: 'yǐng zi', english: 'Shadow' },
+        { hanzi: '硬', pinyin: 'yìng', english: 'Hard / stiff' },
+        { hanzi: '硬件', pinyin: 'yìng jiàn', english: 'Hardware' },
+        { hanzi: '拥挤', pinyin: 'yōng jǐ', english: 'Crowded' },
+        { hanzi: '勇气', pinyin: 'yǒng qì', english: 'Courage' },
+        { hanzi: '用途', pinyin: 'yòng tú', english: 'Use / application' },
+        { hanzi: '优惠', pinyin: 'yōu huì', english: 'Preferential / discount' },
+        { hanzi: '悠久', pinyin: 'yōu jiǔ', english: 'Long-standing / age-old' },
+        { hanzi: '犹豫', pinyin: 'yóu yù', english: 'To hesitate' },
+        { hanzi: '有利', pinyin: 'yǒu lì', english: 'Advantageous / beneficial' },
+        { hanzi: '幼儿园', pinyin: 'yòu ér yuán', english: 'Kindergarten' },
+        { hanzi: '娱乐', pinyin: 'yú lè', english: 'Entertainment' },
+        { hanzi: '与其', pinyin: 'yǔ qí', english: 'Rather than' },
+        { hanzi: '语气', pinyin: 'yǔ qì', english: 'Tone / manner of speaking' },
+        { hanzi: '宇宙', pinyin: 'yǔ zhòu', english: 'Universe' },
+        { hanzi: '预报', pinyin: 'yù bào', english: 'Forecast' },
+        { hanzi: '预订', pinyin: 'yù dìng', english: 'To reserve / book' },
+        { hanzi: '预防', pinyin: 'yù fáng', english: 'To prevent / guard against' },
+        { hanzi: '元旦', pinyin: 'yuán dàn', english: 'New Year\'s Day' },
+        { hanzi: '原料', pinyin: 'yuán liào', english: 'Raw material' },
+        { hanzi: '原则', pinyin: 'yuán zé', english: 'Principle' },
+        { hanzi: '愿望', pinyin: 'yuàn wàng', english: 'Wish / desire' },
+        { hanzi: '晕', pinyin: 'yūn', english: 'Dizzy / to faint' },
+        { hanzi: '运气', pinyin: 'yùn qì', english: 'Luck' },
+        { hanzi: '运输', pinyin: 'yùn shū', english: 'To transport / transportation' },
+        { hanzi: '运用', pinyin: 'yùn yòng', english: 'To use / apply' },
+        { hanzi: '灾害', pinyin: 'zāi hài', english: 'Disaster' },
+        { hanzi: '再三', pinyin: 'zài sān', english: 'Repeatedly' },
+        { hanzi: '赞成', pinyin: 'zàn chéng', english: 'To approve of / agree with' },
+        { hanzi: '赞美', pinyin: 'zàn měi', english: 'To praise / admire' },
+        { hanzi: '造成', pinyin: 'zào chéng', english: 'To cause / create (negative)' },
+        { hanzi: '则', pinyin: 'zé', english: 'Then / in that case' },
+        { hanzi: '责任', pinyin: 'zé rèn', english: 'Responsibility' },
+        { hanzi: '增加', pinyin: 'zēng jiā', english: 'To increase' },
+        { hanzi: '占', pinyin: 'zhàn', english: 'To occupy' },
+        { hanzi: '战争', pinyin: 'zhàn zhēng', english: 'War' },
+        { hanzi: '涨', pinyin: 'zhǎng', english: 'To rise (of prices, water)' },
+        { hanzi: '掌握', pinyin: 'zhǎng wò', english: 'To grasp / master' },
+        { hanzi: '账户', pinyin: 'zhàng hù', english: 'Account (bank)' },
+        { hanzi: '招待', pinyin: 'zhāo dài', english: 'To entertain (guests)' },
+        { hanzi: '着急', pinyin: 'zhāo jí', english: 'Anxious / worried' },
+        { hanzi: '照常', pinyin: 'zhào cháng', english: 'As usual' },
+        { hanzi: '哲学', pinyin: 'zhé xué', english: 'Philosophy' },
+        { hanzi: '珍惜', pinyin: 'zhēn xī', english: 'To cherish' },
+        { hanzi: '真实', pinyin: 'zhēn shí', english: 'True / real' },
+        { hanzi: '针对', pinyin: 'zhēn duì', english: 'To be aimed at' },
+        { hanzi: '诊断', pinyin: 'zhěn duàn', english: 'Diagnosis / to diagnose' },
+        { hanzi: '阵', pinyin: 'zhèn', english: 'A burst / gust /阵' },
+        { hanzi: '振动', pinyin: 'zhèn dòng', english: 'To vibrate / vibration' },
+        { hanzi: '争论', pinyin: 'zhēng lùn', english: 'To argue / debate' },
+        { hanzi: '争取', pinyin: 'zhēng qǔ', english: 'To strive for' },
+        { hanzi: '征求', pinyin: 'zhēng qiú', english: 'To solicit / seek' },
+        { hanzi: '整体', pinyin: 'zhěng tǐ', english: 'Whole / entirety' },
+        { hanzi: '正', pinyin: 'zhèng', english: 'Just (doing sth.) / straight' },
+        { hanzi: '政策', pinyin: 'zhèng cè', english: 'Policy' },
+        { hanzi: '证明', pinyin: 'zhèng míng', english: 'To prove / proof' },
+        { hanzi: '证据', pinyin: 'zhèng jù', english: 'Evidence' },
+        { hanzi: '指导', pinyin: 'zhǐ dǎo', english: 'To guide / guidance' },
+        { hanzi: '指挥', pinyin: 'zhǐ huī', english: 'To command / conduct' },
+        { hanzi: '至今', pinyin: 'zhì jīn', english: 'Up to now' },
+        { hanzi: '至于', pinyin: 'zhì yú', english: 'As for / as to' },
+        { hanzi: '志愿者', pinyin: 'zhì yuàn zhě', english: 'Volunteer' },
+        { hanzi: '制定', pinyin: 'zhì dìng', english: 'To formulate / draw up' },
+        { hanzi: '制度', pinyin: 'zhì dù', english: 'System' },
+        { hanzi: '治疗', pinyin: 'zhì liáo', english: 'To treat / cure' },
+        { hanzi: '秩序', pinyin: 'zhì xù', english: 'Order / sequence' },
+        { hanzi: '智慧', pinyin: 'zhì huì', english: 'Wisdom' },
+        { hanzi: '中心', pinyin: 'zhōng xīn', english: 'Center' },
+        { hanzi: '重量', pinyin: 'zhòng liàng', english: 'Weight' },
+        { hanzi: '周到', pinyin: 'zhōu dào', english: 'Thoughtful / considerate' },
+        { hanzi: '逐步', pinyin: 'zhú bù', english: 'Step by step / gradually' },
+        { hanzi: '主动', pinyin: 'zhǔ dòng', english: 'To take the initiative' },
+        { hanzi: '主题', pinyin: 'zhǔ tí', english: 'Theme / subject' },
+        { hanzi: '主张', pinyin: 'zhǔ zhāng', english: 'To advocate / viewpoint' },
+        { hanzi: '注册', pinyin: 'zhù cè', english: 'To register' },
+        { hanzi: '祝福', pinyin: 'zhù fú', english: 'To bless / blessing' },
+        { hanzi: '抓', pinyin: 'zhuā', english: 'To grab / seize' },
+        { hanzi: '专家', pinyin: 'zhuān jiā', english: 'Expert' },
+        { hanzi: '专心', pinyin: 'zhuān xīn', english: 'To concentrate' },
+        { hanzi: '转变', pinyin: 'zhuǎn biàn', english: 'To change / transform' },
+        { hanzi: '转告', pinyin: 'zhuǎn gào', english: 'To pass on a message' },
+        { hanzi: '装饰', pinyin: 'zhuāng shì', english: 'To decorate / decoration' },
+        { hanzi: '状况', pinyin: 'zhuàng kuàng', english: 'Condition / state' },
+        { hanzi: '状态', pinyin: 'zhuàng tài', english: 'State / condition' },
+        { hanzi: '追求', pinyin: 'zhuī qiú', english: 'To pursue / seek' },
+        { hanzi: '资格', pinyin: 'zī gé', english: 'Qualification' },
+        { hanzi: '资金', pinyin: 'zī jīn', english: 'Funds / capital' },
+        { hanzi: '资料', pinyin: 'zī liào', english: 'Data / material' },
+        { hanzi: '资源', pinyin: 'zī yuán', english: 'Resources' },
+        { hanzi: '姿势', pinyin: 'zī shì', english: 'Posture / gesture' },
+        { hanzi: '咨询', pinyin: 'zī xún', english: 'To consult' },
+        { hanzi: '自信', pinyin: 'zì xìn', english: 'Self-confidence' },
+        { hanzi: '自动', pinyin: 'zì dòng', english: 'Automatic' },
+        { hanzi: '综合', pinyin: 'zōng hé', english: 'Comprehensive' },
+        { hanzi: '总裁', pinyin: 'zǒng cái', english: 'CEO / president' },
+        { hanzi: '总共', pinyin: 'zǒng gòng', english: 'In total' },
+        { hanzi: '总理', pinyin: 'zǒng lǐ', english: 'Premier / prime minister' },
+        { hanzi: '总算', pinyin: 'zǒng suàn', english: 'Finally / at last' },
+        { hanzi: '总统', pinyin: 'zǒng tǒng', english: 'President (of a country)' },
+        { hanzi: '总之', pinyin: 'zǒng zhī', english: 'In short / in brief' },
+        { hanzi: '阻止', pinyin: 'zǔ zhǐ', english: 'To prevent / stop' },
+        { hanzi: '组成', pinyin: 'zǔ chéng', english: 'To form / make up' },
+        { hanzi: '组合', pinyin: 'zǔ hé', english: 'To combine / combination' },
+        { hanzi: '组织', pinyin: 'zǔ zhī', english: 'To organize / organization' },
+        { hanzi: '最初', pinyin: 'zuì chū', english: 'Initially / at first' },
+        { hanzi: '醉', pinyin: 'zuì', english: 'Drunk' },
+        { hanzi: '尊敬', pinyin: 'zūn jìng', english: 'To respect / revere' },
+        { hanzi: '遵守', pinyin: 'zūn shǒu', english: 'To abide by / comply with' },
+        { hanzi: '作品', pinyin: 'zuò pǐn', english: 'Work (of art or literature)' },
+        { hanzi: '作为', pinyin: 'zuò wéi', english: 'As / to act as' },
+        { hanzi: '作文', pinyin: 'zuò wén', english: 'Composition / essay' }
+        ];
+
+        // --- 2. DOM ELEMENTS ---
+        const screens = document.querySelectorAll('.screen');
+        const startBtn = document.getElementById('start-btn');
+        const tryAgainBtn = document.getElementById('try-again-btn');
+        const difficultySlider = document.getElementById('difficulty');
+        const difficultyLabel = document.getElementById('difficulty-label');
+        
+        const scoreEl = document.getElementById('score');
+        const streakEl = document.getElementById('streak');
+        const livesEl = document.getElementById('lives');
+        const timerBar = document.getElementById('timer-bar');
+        const promptEl = document.getElementById('prompt');
+        const answerBtns = document.querySelectorAll('.answer-btn');
+
+        const finalScoreEl = document.getElementById('final-score');
+        const summaryBody = document.getElementById('summary-body');
+
+        // --- 3. GAME STATE VARIABLES ---
+        let score, lives, streak, gameWords, currentWordIndex, missedWords, difficultyTime;
+        let timerInterval;
+
+        const difficultySettings = {
+            1: { time: 8, label: 'Easy (8s)' },
+            2: { time: 5, label: 'Medium (5s)' },
+            3: { time: 3, label: 'Hard (3s)' }
+        };
+
+        // --- 4. EVENT LISTENERS ---
+        startBtn.addEventListener('click', startGame);
+        tryAgainBtn.addEventListener('click', startGame);
+
+        difficultySlider.addEventListener('input', () => {
+            const setting = difficultySettings[difficultySlider.value];
+            difficultyLabel.textContent = setting.label;
+            difficultyTime = setting.time;
+        });
+
+        answerBtns.forEach(btn => {
+            btn.addEventListener('click', selectAnswer);
+        });
+
+        // --- 5. GAME LOGIC FUNCTIONS ---
+        function switchScreen(screenId) {
+            screens.forEach(screen => {
+                screen.classList.remove('active');
+                if (screen.id === screenId) {
+                    screen.classList.add('active');
+                }
+            });
+        }
+
+        function startGame() {
+            score = 0;
+            lives = 3;
+            streak = 0;
+            currentWordIndex = 0;
+            missedWords = [];
+            
+            const setting = difficultySettings[difficultySlider.value];
+            difficultyTime = setting.time;
+
+            gameWords = shuffleArray([...wordList]);
+            
+            updateHeader();
+            nextQuestion();
+            switchScreen('game-screen');
+        }
+
+        function updateHeader() {
+            scoreEl.textContent = `Score: ${score}`;
+            streakEl.innerHTML = `🔥 x ${streak}`;
+            livesEl.textContent = '❤️'.repeat(lives) + '🖤'.repeat(3 - lives);
+        }
+
+        function nextQuestion() {
+            if (currentWordIndex >= gameWords.length || lives <= 0) {
+                gameOver();
+                return;
+            }
+
+            // Reset button styles
+            answerBtns.forEach(btn => {
+                btn.className = 'answer-btn';
+                btn.disabled = false;
+            });
+
+            const currentWord = gameWords[currentWordIndex];
+            promptEl.textContent = `What is the Mandarin word for '${currentWord.english}'?`;
+
+            const options = getOptions(currentWord);
+            answerBtns.forEach((btn, i) => {
+                btn.textContent = options[i].hanzi;
+                btn.dataset.correct = options[i].hanzi === currentWord.hanzi;
+            });
+            
+            startTimer();
+            currentWordIndex++;
+        }
+        
+        function getOptions(correctWord) {
+            let distractors = [];
+            const tempList = wordList.filter(word => word.hanzi !== correctWord.hanzi);
+            
+            while(distractors.length < 3) {
+                const randomIndex = Math.floor(Math.random() * tempList.length);
+                const randomWord = tempList[randomIndex];
+                if (!distractors.includes(randomWord)) {
+                    distractors.push(randomWord);
+                }
+            }
+            
+            const options = shuffleArray([correctWord, ...distractors]);
+            return options;
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            let timeLeft = difficultyTime;
+            timerBar.style.transition = 'none'; // Reset transition for instant update
+            timerBar.style.width = '100%';
+            timerBar.style.backgroundColor = 'var(--correct-color)';
+            
+            // Force reflow
+            void timerBar.offsetWidth;
+            
+            timerBar.style.transition = `width ${difficultyTime}s linear, background-color 0.5s ease`;
+            timerBar.style.width = '0%';
+
+            timerInterval = setInterval(() => {
+                timeLeft -= 0.1;
+                if (timeLeft < difficultyTime / 2) {
+                     timerBar.style.backgroundColor = '#ffc107'; // Yellow
+                }
+                if (timeLeft < difficultyTime / 4) {
+                    timerBar.style.backgroundColor = '#dc3545'; // Red
+                }
+                if (timeLeft <= 0) {
+                    handleIncorrect(null, true); // Timeout
+                }
+            }, 100);
+        }
+
+        function selectAnswer(e) {
+            clearInterval(timerInterval);
+            const selectedBtn = e.target;
+            const isCorrect = selectedBtn.dataset.correct === 'true';
+
+            answerBtns.forEach(btn => btn.disabled = true);
+
+            if (isCorrect) {
+                score += 100 + (streak * 10); // Add bonus points for streak
+                streak++;
+                selectedBtn.classList.add('correct');
+                setTimeout(nextQuestion, 500);
+            } else {
+                handleIncorrect(selectedBtn, false);
+            }
+            updateHeader();
+        }
+
+        function handleIncorrect(selectedBtn, isTimeout) {
+            lives--;
+            streak = 0;
+            const correctWord = gameWords[currentWordIndex - 1];
+            if (!missedWords.some(word => word.hanzi === correctWord.hanzi)) {
+                missedWords.push(correctWord);
+            }
+
+            if (selectedBtn) {
+                 selectedBtn.classList.add('incorrect');
+            }
+           
+            answerBtns.forEach(btn => {
+                if (btn.dataset.correct === 'true') {
+                    btn.classList.add('correct');
+                }
+            });
+
+            updateHeader();
+            setTimeout(nextQuestion, 1500);
+        }
+
+        function gameOver() {
+            switchScreen('game-over-screen');
+            finalScoreEl.textContent = score;
+            populateSummaryTable();
+        }
+
+        function populateSummaryTable() {
+            summaryBody.innerHTML = '';
+            if (missedWords.length === 0) {
+                summaryBody.innerHTML = '<tr><td colspan="4">Excellent work! You didn\'t miss any words.</td></tr>';
+                return;
+            }
+            missedWords.forEach((word, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}.</td>
+                    <td>${word.hanzi}</td>
+                    <td>${word.pinyin}</td>
+                    <td>${word.english}</td>
+                `;
+                summaryBody.appendChild(row);
+            });
+        }
+
+        // --- 6. UTILITY FUNCTIONS ---
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Initialize the difficulty label
+        difficultyLabel.textContent = difficultySettings[difficultySlider.value].label;
+
+    </script>
+</body>
+</html>
