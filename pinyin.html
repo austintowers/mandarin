@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pinyin Pro (拼音高手) - PSLE Revision</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f0f7ff;
+            --main-color: #005a9c;
+            --accent-color: #ffc107;
+            --correct-color: #28a745;
+            --incorrect-color: #dc3545;
+            --white: #ffffff;
+            --text-dark: #333;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Poppins', 'Noto Sans SC', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+            background-color: var(--white);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+        
+        #game-screen {
+            position: relative; /* Needed for streak message positioning */
+        }
+
+        h1 {
+            color: var(--main-color);
+            font-family: 'Noto Sans SC', sans-serif;
+            font-size: 2.5rem;
+        }
+        
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        p {
+            margin: 15px 0;
+            line-height: 1.6;
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: var(--main-color);
+            color: var(--white);
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            width: 200px;
+            margin-top: 20px;
+        }
+
+        .btn:hover {
+            background-color: #004170;
+            transform: translateY(-2px);
+        }
+
+        /* Game Screen */
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .game-header .stat {
+            background-color: var(--bg-color);
+            padding: 5px 15px;
+            border-radius: 20px;
+        }
+
+        #lives {
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+        }
+        
+        #timer-bar-container {
+            width: 100%;
+            height: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        #timer-bar {
+            height: 100%;
+            width: 100%;
+            background-color: var(--correct-color);
+            border-radius: 5px;
+            transition: width 0.1s linear, background-color 0.5s ease;
+        }
+
+        #prompt {
+            font-family: 'Noto Sans SC', sans-serif;
+            font-size: 4.5rem;
+            font-weight: 700;
+            margin: 20px 0;
+            min-height: 80px;
+            color: var(--main-color);
+        }
+
+        .answer-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .answer-btn {
+            background-color: var(--white);
+            color: var(--text-dark);
+            border: 2px solid #ccc;
+            padding: 15px 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-height: 70px;
+            font-size: 1.4rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .answer-btn:hover:not(:disabled) {
+            background-color: var(--bg-color);
+            border-color: var(--main-color);
+        }
+
+        .answer-btn.correct {
+            background-color: var(--correct-color);
+            border-color: var(--correct-color);
+            color: var(--white);
+            font-weight: 600;
+        }
+
+        .answer-btn.incorrect {
+            background-color: var(--incorrect-color);
+            border-color: var(--incorrect-color);
+            color: var(--white);
+            font-weight: 600;
+        }
+        
+        .answer-btn:disabled {
+            cursor: not-allowed;
+        }
+
+        /* Meaning Reveal */
+        #meaning-reveal {
+            visibility: hidden;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--main-color);
+            margin-top: 15px;
+            min-height: 25px;
+        }
+
+        /* Streak Message */
+        #streak-message {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 193, 7, 0.95);
+            color: var(--text-dark);
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.8rem;
+            font-weight: 700;
+            z-index: 10;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease-in-out, top 0.4s ease-in-out;
+        }
+        #streak-message.show {
+            opacity: 1;
+            top: 35%;
+        }
+
+        /* Game Over Screen */
+        .score-summary p {
+            font-size: 1.2rem;
+        }
+
+        #summary-table-container {
+            max-height: 250px;
+            overflow-y: auto;
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        #summary-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        #summary-table th, #summary-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        #summary-table th {
+            background-color: var(--bg-color);
+            position: sticky;
+            top: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="start-screen" class="screen active">
+            <h1>Pinyin Pro 拼音高手</h1>
+            <p>Test your Pinyin mastery! Look at the Mandarin characters and choose the correct Pinyin with the right tones. You have 5 lives. Good luck! 加油!</p>
+            <div class="difficulty-slider">
+                <label for="difficulty">Difficulty: <span id="difficulty-label">Medium (5s)</span></label>
+                <input type="range" id="difficulty" min="1" max="3" value="2">
+            </div>
+            <button id="start-btn" class="btn">Start Sprint</button>
+        </div>
+
+        <div id="game-screen" class="screen">
+            <div id="streak-message"></div>
+            <div class="game-header">
+                <div id="score" class="stat">Score: 0</div>
+                <div id="streak" class="stat">🔥 x 0</div>
+                <div id="lives" class="stat">❤️❤️❤️❤️❤️</div>
+            </div>
+            <div id="timer-bar-container">
+                <div id="timer-bar"></div>
+            </div>
+            <div id="prompt"></div>
+            <div class="answer-grid">
+                <button class="answer-btn"></button>
+                <button class="answer-btn"></button>
+                <button class="answer-btn"></button>
+                <button class="answer-btn"></button>
+            </div>
+            <div id="meaning-reveal"></div>
+        </div>
+
+        <div id="game-over-screen" class="screen">
+            <h2>Great Sprint! Time to review.</h2>
+            <div class="score-summary">
+                <p><strong>Final Score: <span id="final-score">0</span></strong></p>
+                <p><strong>Average Time per Guess: <span id="avg-time">0</span>s</strong></p>
+            </div>
+            <h3>Words to Revise (复习词语)</h3>
+            <div id="summary-table-container">
+                <table id="summary-table">
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>汉字</th>
+                            <th>Pinyin</th>
+                            <th>English Meaning</th>
+                        </tr>
+                    </thead>
+                    <tbody id="summary-body"></tbody>
+                </table>
+            </div>
+            <button id="try-again-btn" class="btn">Try Again</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. WORD LIST ---
+        const wordList = [
+            { hanzi: '课堂', pinyin: 'kètáng', english: 'classroom' }, { hanzi: '考试', pinyin: 'kǎoshì', english: 'exam' }, { hanzi: '班主任', pinyin: 'bānzhǔrèn', english: 'form teacher' }, { hanzi: '努力', pinyin: 'nǔlì', english: 'work hard' }, { hanzi: '成绩', pinyin: 'chéngjì', english: 'results' }, { hanzi: '作业', pinyin: 'zuòyè', english: 'homework' }, { hanzi: '复习', pinyin: 'fùxí', english: 'revision' }, { hanzi: '同学', pinyin: 'tóngxué', english: 'classmate' }, { hanzi: '老师', pinyin: 'lǎoshī', english: 'teacher' }, { hanzi: '课外活动', pinyin: 'kèwài huódòng', english: 'CCA' }, { hanzi: '课间休息', pinyin: 'kèjiān xiūxi', english: 'recess' }, { hanzi: '操场', pinyin: 'cāochǎng', english: 'field' }, { hanzi: '晨会', pinyin: 'chénhuì', english: 'morning assembly' }, { hanzi: '升旗礼', pinyin: 'shēngqí lǐ', english: 'flag-raising' }, { hanzi: '校规', pinyin: 'xiàoguī', english: 'school rules' }, { hanzi: '值日生', pinyin: 'zhírìshēng', english: 'duty student' }, { hanzi: '小组讨论', pinyin: 'xiǎozǔ tǎolùn', english: 'group discussion' }, { hanzi: '请假条', pinyin: 'qǐngjià tiáo', english: 'leave slip' }, { hanzi: '学期', pinyin: 'xuéqī', english: 'term/semester' }, { hanzi: '家长会', pinyin: 'jiāzhǎng huì', english: 'parent–teacher meeting' },
+            { hanzi: '爷爷奶奶', pinyin: 'yéye nǎinai', english: 'grandparents' }, { hanzi: '打扫', pinyin: 'dǎsǎo', english: 'cleaning' }, { hanzi: '相处', pinyin: 'xiāngchǔ', english: 'get along' }, { hanzi: '照顾', pinyin: 'zhàogù', english: 'take care' }, { hanzi: '争吵', pinyin: 'zhēngchǎo', english: 'quarrel' }, { hanzi: '父母', pinyin: 'fùmǔ', english: 'parents' }, { hanzi: '兄弟姐妹', pinyin: 'xiōngdì jiěmèi', english: 'siblings' }, { hanzi: '家务', pinyin: 'jiāwù', english: 'housework' }, { hanzi: '做饭', pinyin: 'zuòfàn', english: 'cook' }, { hanzi: '陪伴', pinyin: 'péibàn', english: 'accompany' }, { hanzi: '家庭作业', pinyin: 'jiātíng zuòyè', english: 'homework' }, { hanzi: '沟通', pinyin: 'gōutōng', english: 'communication' }, { hanzi: '理解', pinyin: 'lǐjiě', english: 'understanding' }, { hanzi: '邻居', pinyin: 'línjū', english: 'neighbour' }, { hanzi: '宠物', pinyin: 'chǒngwù', english: 'pet' }, { hanzi: '洗衣', pinyin: 'xǐyī', english: 'do laundry' }, { hanzi: '整理房间', pinyin: 'zhěnglǐ fángjiān', english: 'tidy room' }, { hanzi: '省钱', pinyin: 'shěngqián', english: 'save money' }, { hanzi: '家规', pinyin: 'jiāguī', english: 'house rules' }, { hanzi: '孝顺', pinyin: 'xiàoshùn', english: 'filial piety' },
+            { hanzi: '诚实', pinyin: 'chéngshí', english: 'honest' }, { hanzi: '体谅', pinyin: 'tǐliàng', english: 'understanding' }, { hanzi: '吵架', pinyin: 'chǎojià', english: 'quarrel' }, { hanzi: '助人为乐', pinyin: 'zhùrén wéi lè', english: 'helping others' }, { hanzi: '感恩', pinyin: 'gǎn’ēn', english: 'gratitude' }, { hanzi: '信任', pinyin: 'xìnrèn', english: 'trust' }, { hanzi: '守信用', pinyin: 'shǒu xìnyòng', english: 'keep promises' }, { hanzi: '友善', pinyin: 'yǒushàn', english: 'friendly' }, { hanzi: '合作', pinyin: 'hézuò', english: 'cooperate' }, { hanzi: '分享', pinyin: 'fēnxiǎng', english: 'share' }, { hanzi: '道歉', pinyin: 'dàoqiàn', english: 'apologise' }, { hanzi: '原谅', pinyin: 'yuánliàng', english: 'forgive' }, { hanzi: '宽容', pinyin: 'kuānróng', english: 'tolerance' }, { hanzi: '尊重', pinyin: 'zūnzhòng', english: 'respect' }, { hanzi: '勇敢', pinyin: 'yǒnggǎn', english: 'brave' }, { hanzi: '责任心', pinyin: 'zérènxīn', english: 'responsibility' }, { hanzi: '自律', pinyin: 'zìlǜ', english: 'self-discipline' }, { hanzi: '同理心', pinyin: 'tónglǐxīn', english: 'empathy' }, { hanzi: '善良', pinyin: 'shànliáng', english: 'kindness' }, { hanzi: '坦诚', pinyin: 'tǎnchéng', english: 'frankness' },
+            { hanzi: '感冒', pinyin: 'gǎnmào', english: 'flu' }, { hanzi: '卫生', pinyin: 'wèishēng', english: 'hygiene' }, { hanzi: '饮食', pinyin: 'yǐnshí', english: 'diet' }, { hanzi: '预防', pinyin: 'yùfáng', english: 'prevention' }, { hanzi: '安全措施', pinyin: 'ānquán cuòshī', english: 'safety measures' }, { hanzi: '发烧', pinyin: 'fāshāo', english: 'fever' }, { hanzi: '咳嗽', pinyin: 'késòu', english: 'cough' }, { hanzi: '过敏', pinyin: 'guòmǐn', english: 'allergy' }, { hanzi: '均衡饮食', pinyin: 'jūnhéng yǐnshí', english: 'balanced diet' }, { hanzi: '垃圾食品', pinyin: 'lājī shípǐn', english: 'junk food' }, { hanzi: '营养', pinyin: 'yíngyǎng', english: 'nutrition' }, { hanzi: '多喝水', pinyin: 'duō hē shuǐ', english: 'drink more water' }, { hanzi: '充足睡眠', pinyin: 'chōngzú shuìmián', english: 'adequate sleep' }, { hanzi: '个人卫生', pinyin: 'gèrén wèishēng', english: 'personal hygiene' }, { hanzi: '勤洗手', pinyin: 'qín xǐshǒu', english: 'wash hands often' }, { hanzi: '消毒', pinyin: 'xiāodú', english: 'sanitise' }, { hanzi: '口罩', pinyin: 'kǒuzhào', english: 'mask' }, { hanzi: '急救', pinyin: 'jíjiù', english: 'first aid' }, { hanzi: '斑马线', pinyin: 'bānmǎxiàn', english: 'zebra crossing' }, { hanzi: '交通安全', pinyin: 'jiāotōng ānquán', english: 'road safety' },
+            { hanzi: '垃圾分类', pinyin: 'lājī fēnlèi', english: 'waste sorting' }, { hanzi: '节约能源', pinyin: 'jiéyuē néngyuán', english: 'save energy' }, { hanzi: '爱护环境', pinyin: 'àihù huánjìng', english: 'care for the environment' }, { hanzi: '回收', pinyin: 'huíshōu', english: 'recycling' }, { hanzi: '公德心', pinyin: 'gōngdéxīn', english: 'civic-mindedness' }, { hanzi: '环保袋', pinyin: 'huánbǎo dài', english: 'reusable bag' }, { hanzi: '节约用水', pinyin: 'jiéyuē yòngshuǐ', english: 'conserve water' }, { hanzi: '节约用电', pinyin: 'jiéyuē yòngdiàn', english: 'save electricity' }, { hanzi: '空气污染', pinyin: 'kōngqì wūrǎn', english: 'air pollution' }, { hanzi: '水污染', pinyin: 'shuǐ wūrǎn', english: 'water pollution' }, { hanzi: '噪音', pinyin: 'zàoyīn', english: 'noise pollution' }, { hanzi: '绿色出行', pinyin: 'lǜsè chūxíng', english: 'green commuting' }, { hanzi: '公共交通', pinyin: 'gōnggòng jiāotōng', english: 'public transport' }, { hanzi: '植树', pinyin: 'zhíshù', english: 'tree planting' }, { hanzi: '干净整齐', pinyin: 'gānjìng zhěngqí', english: 'clean & tidy' }, { hanzi: '随手关灯', pinyin: 'suíshǒu guān dēng', english: 'switch off lights' }, { hanzi: '乱丢垃圾', pinyin: 'luàn diū lājī', english: 'littering' }, { hanzi: '二手物品', pinyin: 'èrshǒu wùpǐn', english: 'second-hand items' }, { hanzi: '自带餐具', pinyin: 'zìdài cānjù', english: 'bring your own utensils' }, { hanzi: '节省资源', pinyin: 'jiéshěng zīyuán', english: 'conserve resources' },
+            { hanzi: '比赛', pinyin: 'bǐsài', english: 'competition' }, { hanzi: '团队精神', pinyin: 'tuánduì jīngshén', english: 'team spirit' }, { hanzi: '练习', pinyin: 'liànxí', english: 'practice' }, { hanzi: '受伤', pinyin: 'shòushāng', english: 'injured' }, { hanzi: '锻炼身体', pinyin: 'duànliàn shēntǐ', english: 'keep fit' }, { hanzi: '热身', pinyin: 'rèshēn', english: 'warm-up' }, { hanzi: '拉伸', pinyin: 'lāshēn', english: 'stretch' }, { hanzi: '体能', pinyin: 'tǐnéng', english: 'fitness' }, { hanzi: '裁判', pinyin: 'cáipàn', english: 'referee' }, { hanzi: '冠军', pinyin: 'guànjūn', english: 'champion' }, { hanzi: '亚军', pinyin: 'yàjūn', english: 'runner-up' }, { hanzi: '加油', pinyin: 'jiāyóu', english: 'cheer' }, { hanzi: '啦啦队', pinyin: 'lālāduì', english: 'cheer squad' }, { hanzi: '球类运动', pinyin: 'qiúlèi yùndòng', english: 'ball games' }, { hanzi: '游泳', pinyin: 'yóuyǒng', english: 'swimming' }, { hanzi: '跑步', pinyin: 'pǎobù', english: 'running' }, { hanzi: '接力', pinyin: 'jiēlì', english: 'relay' }, { hanzi: '体育课', pinyin: 'tǐyù kè', english: 'PE lesson' }, { hanzi: '护具', pinyin: 'hùjù', english: 'protective gear' }, { hanzi: '赛场', pinyin: 'sàichǎng', english: 'sports ground' },
+            { hanzi: '春节', pinyin: 'Chūn jié', english: 'Chinese New Year' }, { hanzi: '拜年', pinyin: 'bàinián', english: 'New Year visit' }, { hanzi: '月饼', pinyin: 'yuèbǐng', english: 'mooncake' }, { hanzi: '烟花', pinyin: 'yānhuā', english: 'fireworks' }, { hanzi: '团圆', pinyin: 'tuányuán', english: 'reunion' }, { hanzi: '元宵节', pinyin: 'Yuánxiāo jié', english: 'Lantern Festival' }, { hanzi: '端午节', pinyin: 'Duānwǔ jié', english: 'Dragon Boat Festival' }, { hanzi: '中秋节', pinyin: 'Zhōngqiū jié', english: 'Mid-Autumn Festival' }, { hanzi: '汤圆', pinyin: 'tāngyuán', english: 'glutinous balls' }, { hanzi: '粽子', pinyin: 'zòngzi', english: 'rice dumpling' }, { hanzi: '红包', pinyin: 'hóngbāo', english: 'red packet' }, { hanzi: '舞龙', pinyin: 'wǔlóng', english: 'dragon dance' }, { hanzi: '舞狮', pinyin: 'wǔshī', english: 'lion dance' }, { hanzi: '年糕', pinyin: 'niángāo', english: 'rice cake' }, { hanzi: '年夜饭', pinyin: 'niányèfàn', english: 'reunion dinner' }, { hanzi: '灯笼', pinyin: 'dēnglóng', english: 'lantern' }, { hanzi: '春联', pinyin: 'chūnlián', english: 'couplets' }, { hanzi: '节日气氛', pinyin: 'jiérì qìfēn', english: 'festive vibes' }, { hanzi: '习俗', pinyin: 'xísú', english: 'customs' }, { hanzi: '守岁', pinyin: 'shǒusuì', english: 'stay up on NYE' },
+            { hanzi: '礼貌', pinyin: 'lǐmào', english: 'politeness' }, { hanzi: '吸烟区', pinyin: 'xīyān qū', english: 'smoking area' }, { hanzi: '占座', pinyin: 'zhànzuò', english: 'seat-hogging' }, { hanzi: '插队', pinyin: 'chāduì', english: 'cut queue' }, { hanzi: '批评', pinyin: 'pīpíng', english: 'criticism' }, { hanzi: '让座', pinyin: 'ràngzuò', english: 'give up seat' }, { hanzi: '公共秩序', pinyin: 'gōnggòng zhìxù', english: 'public order' }, { hanzi: '随地吐痰', pinyin: 'suídì tǔtán', english: 'spitting' }, { hanzi: '乱扔垃圾', pinyin: 'luàn rēng lājī', english: 'littering' }, { hanzi: '文明用语', pinyin: 'wénmíng yòngyǔ', english: 'courteous speech' }, { hanzi: '欺凌', pinyin: 'qīlíng', english: 'bullying' }, { hanzi: '网络霸凌', pinyin: 'wǎngluò bàlíng', english: 'cyberbullying' }, { hanzi: '交通礼仪', pinyin: 'jiāotōng lǐyí', english: 'road etiquette' }, { hanzi: '优先座位', pinyin: 'yōuxiān zuòwèi', english: 'priority seat' }, { hanzi: '志愿服务', pinyin: 'zhìyuàn fúwù', english: 'volunteering' }, { hanzi: '遵守法规', pinyin: 'zūnshǒu fǎguī', english: 'obey rules' }, { hanzi: '社会责任', pinyin: 'shèhuì zérèn', english: 'social responsibility' }, { hanzi: '尊重他人', pinyin: 'zūnzhòng tārén', english: 'respect others' }, { hanzi: '不文明行为', pinyin: 'bù wénmíng xíngwéi', english: 'inconsiderate acts' }, { hanzi: '反思', pinyin: 'fǎnsī', english: 'self-reflection' },
+            { hanzi: '手机', pinyin: 'shǒujī', english: 'mobile phone' }, { hanzi: '上网', pinyin: 'shàngwǎng', english: 'go online' }, { hanzi: '依赖', pinyin: 'yīlài', english: 'dependence' }, { hanzi: '网络安全', pinyin: 'wǎngluò ānquán', english: 'cyber safety' }, { hanzi: '视频通话', pinyin: 'shìpín tōnghuà', english: 'video call' }, { hanzi: '资讯科技', pinyin: 'zīxùn kējì', english: 'ICT' }, { hanzi: '社交媒体', pinyin: 'shèjiāo méitǐ', english: 'social media' }, { hanzi: '下载', pinyin: 'xiàzài', english: 'download' }, { hanzi: '上传', pinyin: 'shàngchuán', english: 'upload' }, { hanzi: '密码', pinyin: 'mìmǎ', english: 'password' }, { hanzi: '隐私', pinyin: 'yǐnsī', english: 'privacy' }, { hanzi: '网瘾', pinyin: 'wǎngyǐn', english: 'internet addiction' }, { hanzi: '网课', pinyin: 'wǎngkè', english: 'online class' }, { hanzi: '屏幕时间', pinyin: 'píngmù shíjiān', english: 'screen time' }, { hanzi: '假新闻', pinyin: 'jiǎ xīnwén', english: 'fake news' }, { hanzi: '验证码', pinyin: 'yànzhèngmǎ', english: 'verification code' }, { hanzi: '耳机', pinyin: 'ěrjī', english: 'headphones' }, { hanzi: '充电', pinyin: 'chōngdiàn', english: 'charge' }, { hanzi: '二维码', pinyin: 'èrwéimǎ', english: 'QR code' }, { hanzi: '蓝牙', pinyin: 'Lányá', english: 'Bluetooth' },
+            { hanzi: '听讲', pinyin: 'tīngjiǎng', english: 'pay attention' }, { hanzi: '打断', pinyin: 'dǎduàn', english: 'interrupt' }, { hanzi: '遵守规则', pinyin: 'zūnshǒu guīzé', english: 'follow rules' }, { hanzi: '做好准备', pinyin: 'zuòhǎo zhǔnbèi', english: 'be prepared' }, { hanzi: '举手发言', pinyin: 'jǔshǒu fāyán', english: 'raise hand' }, { hanzi: '迟到', pinyin: 'chídào', english: 'late' }, { hanzi: '纪律', pinyin: 'jìlǜ', english: 'discipline' }, { hanzi: '专心', pinyin: 'zhuānxīn', english: 'focused' }, { hanzi: '自觉', pinyin: 'zìjué', english: 'self-directed' }, { hanzi: '交功课', pinyin: 'jiāo gōngkè', english: 'submit homework' }, { hanzi: '合作学习', pinyin: 'hézuò xuéxí', english: 'collaborative learning' }, { hanzi: '尊重老师', pinyin: 'zūnzhòng lǎoshī', english: 'respect teacher' }, { hanzi: '轮流发言', pinyin: 'lúnliú fāyán', english: 'take turns' }, { hanzi: '排队', pinyin: 'páiduì', english: 'queue' }, { hanzi: '保持安静', pinyin: 'bǎochí ānjìng', english: 'keep quiet' }, { hanzi: '抄袭', pinyin: 'chāoxí', english: 'plagiarism' }, { hanzi: '作弊', pinyin: 'zuòbì', english: 'cheat' }, { hanzi: '检讨', pinyin: 'jiǎntǎo', english: 'reflect/write reflection' }, { hanzi: '请假', pinyin: 'qǐngjià', english: 'apply for leave' }, { hanzi: '借用', pinyin: 'jièyòng', english: 'borrow (stationery)' }
+        ];
+
+        // --- 2. DOM ELEMENTS ---
+        const screens = document.querySelectorAll('.screen');
+        const startBtn = document.getElementById('start-btn');
+        const tryAgainBtn = document.getElementById('try-again-btn');
+        const difficultySlider = document.getElementById('difficulty');
+        const difficultyLabel = document.getElementById('difficulty-label');
+        
+        const scoreEl = document.getElementById('score');
+        const streakEl = document.getElementById('streak');
+        const livesEl = document.getElementById('lives');
+        const timerBar = document.getElementById('timer-bar');
+        const promptEl = document.getElementById('prompt');
+        const answerBtns = document.querySelectorAll('.answer-btn');
+        const streakMessageEl = document.getElementById('streak-message');
+        const meaningRevealEl = document.getElementById('meaning-reveal');
+
+        const finalScoreEl = document.getElementById('final-score');
+        const avgTimeEl = document.getElementById('avg-time');
+        const summaryBody = document.getElementById('summary-body');
+
+        // --- 3. GAME STATE VARIABLES ---
+        let score, lives, streak, gameWords, currentWordIndex, missedWords, difficultyTime;
+        let timerInterval, startTime, totalGuessTime, questionsAnswered;
+
+        const difficultySettings = {
+            1: { time: 8, label: 'Easy (8s)' },
+            2: { time: 5, label: 'Medium (5s)' },
+            3: { time: 3, label: 'Hard (3s)' }
+        };
+
+        // --- 4. EVENT LISTENERS ---
+        startBtn.addEventListener('click', startGame);
+        tryAgainBtn.addEventListener('click', startGame);
+
+        difficultySlider.addEventListener('input', () => {
+            const setting = difficultySettings[difficultySlider.value];
+            difficultyLabel.textContent = setting.label;
+            difficultyTime = setting.time;
+        });
+
+        answerBtns.forEach(btn => {
+            btn.addEventListener('click', selectAnswer);
+        });
+
+        // --- 5. GAME LOGIC FUNCTIONS ---
+        function switchScreen(screenId) {
+            screens.forEach(screen => {
+                screen.classList.remove('active');
+                if (screen.id === screenId) {
+                    screen.classList.add('active');
+                }
+            });
+        }
+
+        function startGame() {
+            score = 0;
+            lives = 5;
+            streak = 0;
+            currentWordIndex = 0;
+            missedWords = [];
+            totalGuessTime = 0;
+            questionsAnswered = 0;
+            
+            const setting = difficultySettings[difficultySlider.value];
+            difficultyTime = setting.time;
+
+            gameWords = shuffleArray([...wordList]);
+            
+            updateHeader();
+            nextQuestion();
+            switchScreen('game-screen');
+        }
+
+        function updateHeader() {
+            scoreEl.textContent = `Score: ${score}`;
+            streakEl.innerHTML = `🔥 x ${streak}`;
+            livesEl.textContent = '❤️'.repeat(lives) + '🖤'.repeat(5 - lives);
+        }
+
+        function nextQuestion() {
+            if (currentWordIndex >= gameWords.length || lives <= 0) {
+                gameOver();
+                return;
+            }
+
+            answerBtns.forEach(btn => {
+                btn.className = 'answer-btn';
+                btn.disabled = false;
+            });
+            meaningRevealEl.style.visibility = 'hidden';
+
+            const currentWord = gameWords[currentWordIndex];
+            promptEl.textContent = currentWord.hanzi;
+
+            const options = getOptions(currentWord);
+            answerBtns.forEach((btn, i) => {
+                btn.textContent = options[i];
+                btn.dataset.correct = options[i] === currentWord.pinyin;
+            });
+            
+            startTimer();
+            currentWordIndex++;
+        }
+        
+        function getOptions(correctWord) {
+            let distractors = [];
+            const tempList = wordList.filter(word => word.pinyin !== correctWord.pinyin);
+            
+            while (distractors.length < 3) {
+                const randomIndex = Math.floor(Math.random() * tempList.length);
+                const randomPinyin = tempList[randomIndex].pinyin;
+                if (!distractors.includes(randomPinyin)) {
+                    distractors.push(randomPinyin);
+                }
+            }
+            
+            const options = [correctWord.pinyin, ...distractors];
+            return shuffleArray(options);
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            startTime = Date.now();
+            let timeLeft = difficultyTime;
+            timerBar.style.transition = 'none';
+            timerBar.style.width = '100%';
+            timerBar.style.backgroundColor = 'var(--correct-color)';
+            
+            void timerBar.offsetWidth;
+            
+            timerBar.style.transition = `width ${difficultyTime}s linear, background-color 0.5s ease`;
+            timerBar.style.width = '0%';
+
+            timerInterval = setInterval(() => {
+                timeLeft -= 0.1;
+                if (timeLeft < difficultyTime / 2) timerBar.style.backgroundColor = '#ffc107';
+                if (timeLeft < difficultyTime / 4) timerBar.style.backgroundColor = '#dc3545';
+                if (timeLeft <= 0) {
+                    handleIncorrect(null, true);
+                }
+            }, 100);
+        }
+
+        function selectAnswer(e) {
+            clearInterval(timerInterval);
+            recordTime();
+            
+            const selectedBtn = e.target.closest('.answer-btn');
+            const isCorrect = selectedBtn.dataset.correct === 'true';
+
+            answerBtns.forEach(btn => {
+                btn.disabled = true;
+            });
+
+            revealMeaning();
+
+            if (isCorrect) {
+                score += 100 + (streak * 10);
+                streak++;
+                checkStreak();
+                selectedBtn.classList.add('correct');
+                setTimeout(nextQuestion, 1200);
+            } else {
+                handleIncorrect(selectedBtn, false);
+            }
+            updateHeader();
+        }
+
+        function handleIncorrect(selectedBtn, isTimeout) {
+            if(isTimeout) recordTime();
+            
+            lives--;
+            streak = 0;
+            const correctWord = gameWords[currentWordIndex - 1];
+            if (!missedWords.some(word => word.hanzi === correctWord.hanzi)) {
+                missedWords.push(correctWord);
+            }
+            
+            if(!isTimeout) revealMeaning();
+
+            answerBtns.forEach(btn => {
+                btn.disabled = true;
+                if (btn.dataset.correct === 'true') {
+                    btn.classList.add('correct');
+                }
+            });
+
+            if (selectedBtn) {
+                 selectedBtn.classList.add('incorrect');
+            }
+
+            updateHeader();
+            setTimeout(nextQuestion, 1500);
+        }
+
+        function revealMeaning() {
+            const currentWord = gameWords[currentWordIndex - 1];
+            meaningRevealEl.textContent = `Meaning: ${currentWord.english}`;
+            meaningRevealEl.style.visibility = 'visible';
+        }
+
+        function checkStreak() {
+            let message = '';
+            switch (streak) {
+                case 3: message = "Great!"; break;
+                case 5: message = "Awesome!"; break;
+                case 10: message = "Unstoppable!"; break;
+                case 15: message = "Wrecking Ball!"; break;
+                case 20: message = "GODLIKE!"; break;
+            }
+            if (streak > 20 && streak % 5 === 0) {
+                message = `${streak} Streak!`;
+            }
+
+            if (message) {
+                showStreakMessage(message);
+            }
+        }
+
+        function showStreakMessage(message) {
+            streakMessageEl.textContent = message;
+            streakMessageEl.classList.add('show');
+            setTimeout(() => {
+                streakMessageEl.classList.remove('show');
+            }, 1500);
+        }
+        
+        function recordTime() {
+            const endTime = Date.now();
+            const guessTime = (endTime - startTime) / 1000;
+            totalGuessTime += guessTime;
+            questionsAnswered++;
+        }
+
+        function gameOver() {
+            switchScreen('game-over-screen');
+            finalScoreEl.textContent = score;
+            
+            const averageTime = questionsAnswered > 0 ? (totalGuessTime / questionsAnswered).toFixed(2) : 0;
+            avgTimeEl.textContent = averageTime;
+
+            populateSummaryTable();
+        }
+
+        function populateSummaryTable() {
+            summaryBody.innerHTML = '';
+            if (missedWords.length === 0) {
+                summaryBody.innerHTML = '<tr><td colspan="4">Excellent work! You didn\'t miss any words.</td></tr>';
+                return;
+            }
+            missedWords.forEach((word, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}.</td>
+                    <td>${word.hanzi}</td>
+                    <td>${word.pinyin}</td>
+                    <td>${word.english}</td>
+                `;
+                summaryBody.appendChild(row);
+            });
+        }
+
+        // --- 6. UTILITY FUNCTIONS ---
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Initialize the difficulty label
+        difficultyLabel.textContent = difficultySettings[difficultySlider.value].label;
+
+    </script>
+</body>
+</html>
